@@ -13,17 +13,34 @@ sf::Vector2f lerp_vec(sf::Vector2f v0, sf::Vector2f v1, float t) {
   return sf::Vector2f(lerp(v0.x,v1.x,t),lerp(v0.y,v1.y,t));
 }
 
+sf::Vector2f calc_img_size(const sf::Vector2f&v,const float &s){
+    return sf::Vector2f(v.x * s, v.y * s);
+}
+
+void make_image_inside_screen(sf::Vector2f&cam_pos,const sf::Vector2f&img_s,const sf::RenderWindow&w){
+    if(cam_pos.x > img_s.x/2.0){cam_pos.x = img_s.x/2.0;}
+    if(cam_pos.y > img_s.y/2.0){cam_pos.y = img_s.y/2.0;}
+
+    if(cam_pos.x < w.getSize().x - img_s.x/2.0){cam_pos.x = w.getSize().x - img_s.x/2.0;}
+    if(cam_pos.y < w.getSize().y - img_s.y/2.0){cam_pos.y = w.getSize().y - img_s.y/2.0;}
+
+    if(w.getSize().x >= img_s.x ){
+        cam_pos.x = w.getSize().x/2.0; 
+    }
+
+    if(w.getSize().y >= img_s.y){
+        cam_pos.y = w.getSize().y/2.0;
+    }
+}
+
 int main(int argc, char **argv){
 
     sf::RenderWindow window;
     sf::Texture image;
     sf::Vector2f img_size;
     sf::Vector2f mouse_position,old_mouse_position,camera_pos,lerp_cam_pos;
-    float scale = 1.0;
-    float lerp_scale = 1.0;
-
+    float scale = 1.0,lerp_scale = 1.0;
     double start,frame_time;
-
     bool moved = 0;
 
     if(argc > 1){
@@ -38,6 +55,13 @@ int main(int argc, char **argv){
 
     sf::Sprite sprite(image);
     sprite.setOrigin(sf::Vector2f(image.getSize().x/2.0,image.getSize().y/2.0));
+
+    img_size = calc_img_size(sf::Vector2f(image.getSize()),scale);
+    make_image_inside_screen(camera_pos,img_size,window);
+
+    lerp_cam_pos = camera_pos;
+    lerp_scale = scale;
+
     while(window.isOpen()){
         
         start = clock();
@@ -60,17 +84,14 @@ int main(int argc, char **argv){
 
             if(event.type == sf::Event::MouseWheelScrolled){
 
-                 sf::Vector2f fac((camera_pos.x - mouse_position.x) / (image.getSize().x*scale),( camera_pos.y -  mouse_position.y) / (image.getSize().y*scale));
+                sf::Vector2f fac((camera_pos.x - mouse_position.x) / (image.getSize().x*scale),( camera_pos.y -  mouse_position.y) / (image.getSize().y*scale));
 
-                scale += scale*0.2*event.mouseWheelScroll.delta;
+                scale += scale * 0.2 * event.mouseWheelScroll.delta;
 
-                camera_pos.x = (fac.x * (image.getSize().x*scale))+( mouse_position.x);
-                camera_pos.y = (fac.y * (image.getSize().y*scale))+( mouse_position.y);
-                
+                camera_pos.x = (fac.x * (image.getSize().x*scale)) + (mouse_position.x);
+                camera_pos.y = (fac.y * (image.getSize().y*scale)) + (mouse_position.y);
             }
         }
-
-        img_size = sf::Vector2f(image.getSize().x * scale,image.getSize().y * scale);
 
         if(sf::Mouse::isButtonPressed(sf::Mouse::Left) && moved){
             camera_pos += mouse_position - old_mouse_position;
@@ -80,21 +101,13 @@ int main(int argc, char **argv){
         if(sf::Keyboard::isKeyPressed(sf::Keyboard::LShift) && sf::Keyboard::isKeyPressed(sf::Keyboard::R)){
                scale = calc_scale(sf::Vector2f(window.getSize()),sf::Vector2f(image.getSize()));
         }
-        
-        if(camera_pos.x > img_size.x/2.0){camera_pos.x = img_size.x/2.0;}
-        if(camera_pos.y > img_size.y/2.0){camera_pos.y = img_size.y/2.0;}
-
-        if(camera_pos.x < window.getSize().x - img_size.x/2.0){camera_pos.x = window.getSize().x - img_size.x/2.0;}
-        if(camera_pos.y < window.getSize().y - img_size.y/2.0){camera_pos.y = window.getSize().y - img_size.y/2.0;}
-
-        if(window.getSize().x >= img_size.x ){
-            camera_pos.x = window.getSize().x/2.0; 
+         if(sf::Keyboard::isKeyPressed(sf::Keyboard::LShift) && sf::Keyboard::isKeyPressed(sf::Keyboard::O)){
+               scale = 1.0;
         }
 
-        if(window.getSize().y >= img_size.y){
-            camera_pos.y = window.getSize().y/2.0;
-        }
-        
+        img_size = calc_img_size(sf::Vector2f(image.getSize()),lerp_scale);
+        make_image_inside_screen(camera_pos,img_size,window);
+
         lerp_scale = lerp(lerp_scale,scale,frame_time);
         lerp_cam_pos = lerp_vec(lerp_cam_pos,camera_pos,frame_time);
 
