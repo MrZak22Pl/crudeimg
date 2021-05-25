@@ -18,7 +18,8 @@ exaple:
 crudeimg ~/img.png
 
 ### Key Bindings:
-Left Shift + R - reset image scale to make it fit window size.
+  - Left Shift + R - Set image scale to make it fit window size.
+  - Left Shift + O - Set image scale to 1.0.
 
 ### Supported image formats:
 png, bmp, jpg, psd
