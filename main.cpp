@@ -8,10 +8,10 @@ int main(int argc, char **argv){
 
     sf::RenderWindow window;
     sf::Texture image;
-
     sf::Vector2f img_size;
     sf::Vector2f mouse_position,old_mouse_position,camera_pos;
     float scale = 1.0;
+    bool moved = 0;
 
     if(argc > 1){
         image.loadFromFile(argv[1]);
@@ -20,45 +20,40 @@ int main(int argc, char **argv){
     }else{
         window.create(sf::VideoMode(300,300),"No image!");
     }
-    
-    scale = calc_scale(sf::Vector2f(window.getSize()),sf::Vector2f(image.getSize()));
 
     window.setFramerateLimit(60);
 
-    sf::Sprite sp(image);
+    sf::Sprite sprite(image);
 
     while(window.isOpen()){
         
         old_mouse_position = mouse_position;
         mouse_position = sf::Vector2f(sf::Mouse::getPosition(window));
 
-        sf::Event e;
+        sf::Event event;
 
-        bool moved = 0;
+        moved = 0;
 
-        while(window.pollEvent(e)){
+        while(window.pollEvent(event)){
 
-            if(e.type == sf::Event::Resized){
-               window.setView(sf::View(sf::FloatRect(0,0,e.size.width,e.size.height)));
+            if(event.type == sf::Event::Resized){
+                window.setView(sf::View(sf::FloatRect(0,0,event.size.width,event.size.height)));
                 scale = calc_scale(sf::Vector2f(window.getSize()),sf::Vector2f(image.getSize()));
             }
 
+            if(event.type == sf::Event::Closed){window.close();}
+            if(event.type == sf::Event::MouseMoved){moved = 1;}
 
-            if(e.type == sf::Event::Closed)window.close();
-            if(e.type == sf::Event::MouseMoved){moved = 1;}
-
-            if(e.type == sf::Event::MouseWheelScrolled){
+            if(event.type == sf::Event::MouseWheelScrolled){
 
                 sf::Vector2f fac((camera_pos.x - window.getSize().x/2.0) / (image.getSize().x*scale),( camera_pos.y - window.getSize().y/2.0) / (image.getSize().y*scale));
 
-                scale += scale*0.2*e.mouseWheelScroll.delta;
+                scale += scale*0.2*event.mouseWheelScroll.delta;
 
                 camera_pos.x = (fac.x * (image.getSize().x*scale))+window.getSize().x/2.0;
                 camera_pos.y = (fac.y * (image.getSize().y*scale))+window.getSize().y/2.0;
             }
         }
-
-        window.clear();
 
         img_size = sf::Vector2f(image.getSize().x * scale,image.getSize().y * scale);
 
@@ -72,8 +67,8 @@ int main(int argc, char **argv){
             }
         }
         
-        if(camera_pos.x > 0)camera_pos.x = 0;
-        if(camera_pos.y > 0)camera_pos.y = 0;
+        if(camera_pos.x > 0){camera_pos.x = 0;}
+        if(camera_pos.y > 0){camera_pos.y = 0;}
 
         if(camera_pos.x < window.getSize().x - img_size.x){camera_pos.x = window.getSize().x - img_size.x;}
         if(camera_pos.y < window.getSize().y - img_size.y){camera_pos.y = window.getSize().y - img_size.y;}
@@ -86,14 +81,13 @@ int main(int argc, char **argv){
             camera_pos.y = window.getSize().y/2.0 - img_size.y/2.0;
         }
 
-        sp.setScale(sf::Vector2f(scale,scale));
-        sp.setPosition(camera_pos);
-        window.draw(sp);
+        sprite.setScale(sf::Vector2f(scale,scale));
+        sprite.setPosition(camera_pos);
 
+        window.clear();
+        window.draw(sprite);
         window.display();
     }
 
-
     return 0;
 }
-
